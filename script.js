@@ -117,4 +117,27 @@ const calcDisplayBalance = function (movements) {
   labelBalance.textContent = `${balance}€`;
 };
 
-calcDisplayBalance(movements);
+//now we need to enter all deposits and witdrawels and total intrest accumulated together into the page
+const calcDisplaySummary = function (movements) {
+  const incomes = movements
+    .filter(mov => mov > 0)                     //take all credits through calculating only positve ones
+    .reduce((acc, mov) => acc + mov, 0);        //summing all those
+  labelSumIn.textContent = `${incomes}€`;
+
+  const out = movements
+    .filter(mov => mov < 0)                     //taking all the withdrawels
+    .reduce((acc, mov) => acc + mov, 0);        //summing all those
+  labelSumOut.textContent = `${Math.abs(out)}€`;
+
+  const interest = movements
+    .filter(mov => mov > 0)                       //intrest is caluclated for positive ones so .......
+    .map(deposit => (deposit * 1.2) / 100)        // all positive income is added with intrest rate of 1.2
+    .filter((int, i, arr) => {      //Intrest is calculated only when the minimum is atleast 1 euro.
+      // console.log(arr);
+      return int >= 1;
+    })
+    .reduce((acc, int) => acc + int, 0);          //summing all of them
+  labelSumInterest.textContent = `${interest}€`;
+};
+
+calcDisplaySummary(movements);
