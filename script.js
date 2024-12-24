@@ -151,7 +151,7 @@ const updateUI = function (acc) {
 
 ///////////////////////////////////////
 // Event handlers
-let currentAccount;
+let currentAccount;                             //current account is used as a base for all the other functionalites which is initialized during login button
 
 btnLogin.addEventListener('click', function (e) {
   // Prevent form from submitting
@@ -201,4 +201,40 @@ btnTransfer.addEventListener('click', function (e) {
     // Update UI
     updateUI(currentAccount);
   }
+});
+
+
+
+//Adding closing account functionality
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin                //if user creditentials matches then
+  ) {
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username                 //find the index of the user in accounts
+    );
+    // console.log(index);
+    // .indexOf(23)
+
+    // Delete account
+    accounts.splice(index, 1);                  //from that index delete 1 element means the user account
+
+    // Hide UI
+    containerApp.style.opacity = 0;
+  }
+
+  // inputCloseUsername.value = inputClosePin.value = '';
+});
+
+
+//to check all the user credentials 
+document.querySelector('nav > img').addEventListener('click', function(){
+  let infoString = `USERNAMES\t\tPINS\n`
+  accounts.forEach(function(account){
+    infoString += account.username+'\t\t' + account.pin + '\n';
+  });
+  alert(infoString);
 });
