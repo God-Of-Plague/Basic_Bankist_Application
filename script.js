@@ -74,27 +74,6 @@ const currencies = new Map([
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
 /////////////////////////////////////////////////
-
-const displayMovements = function (movements) {
-  //to remove the previous data
-  containerMovements.innerHTML = '';
-
-  movements.forEach(function (mov, i) {
-    const type = mov > 0 ? 'deposit' : 'withdrawal';
-
-    const html = `
-      <div class="movements__row">
-        <div class="movements__type movements__type--${type}">${
-      i + 1
-    } ${type}</div>
-        <div class="movements__value">${mov}€</div>
-      </div>
-    `;
-    //adding the data into beginnign of movements
-    containerMovements.insertAdjacentHTML('afterbegin', html);
-  });
-};
-
 //shortening the long names to short and make them usernames
 const createUsernames = function (accs) {
   accs.forEach(function (acc) {
@@ -111,36 +90,63 @@ const createUsernames = function (accs) {
 
 createUsernames(accounts);
 
-//to display the total balance we need to add all the transactions in array
-const calcDisplayBalance = function (movements) {
-  let balance = movements.reduce((acc, mov) => acc + mov, 0);
+const displayMovements = function (movements, sort = false) {
+  containerMovements.innerHTML = '';
 
-  //changing the content inside the balance text.
-  labelBalance.textContent = `${balance}€`;
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  movs.forEach(function (mov, i) {
+    const type = mov > 0 ? 'deposit' : 'withdrawal';
+
+    const html = `
+      <div class="movements__row">
+        <div class="movements__type movements__type--${type}">${
+      i + 1
+    } ${type}</div>
+        <div class="movements__value">${mov}€</div>
+      </div>
+    `;
+
+    containerMovements.insertAdjacentHTML('afterbegin', html);
+  });
 };
 
-//now we need to enter all deposits and witdrawels and total intrest accumulated together into the page
+const calcDisplayBalance = function (acc) {
+  acc.balance = acc.movements.reduce((acc, mov) => acc + mov, 0);
+  labelBalance.textContent = `${acc.balance}€`;
+};
+
 const calcDisplaySummary = function (acc) {
   const incomes = acc.movements
-    .filter(mov => mov > 0) //take all credits through calculating only positve ones
-    .reduce((acc, mov) => acc + mov, 0); //summing all those
+    .filter(mov => mov > 0)
+    .reduce((acc, mov) => acc + mov, 0);
   labelSumIn.textContent = `${incomes}€`;
 
   const out = acc.movements
-    .filter(mov => mov < 0) //taking all the withdrawels
-    .reduce((acc, mov) => acc + mov, 0); //summing all those
+    .filter(mov => mov < 0)
+    .reduce((acc, mov) => acc + mov, 0);
   labelSumOut.textContent = `${Math.abs(out)}€`;
 
   const interest = acc.movements
-    .filter(mov => mov > 0) //intrest is caluclated for positive ones so .......
-    .map(deposit => (deposit * acc.interestRate) / 100) // all positive income is added with intrest rate of 1.2
+    .filter(mov => mov > 0)
+    .map(deposit => (deposit * acc.interestRate) / 100)
     .filter((int, i, arr) => {
-      //Intrest is calculated only when the minimum is atleast 1 euro.
       // console.log(arr);
       return int >= 1;
     })
-    .reduce((acc, int) => acc + int, 0); //summing all of them
+    .reduce((acc, int) => acc + int, 0);
   labelSumInterest.textContent = `${interest}€`;
+};
+
+const updateUI = function (acc) {
+  // Display movements
+  displayMovements(acc.movements);
+
+  // Display balance
+  calcDisplayBalance(acc);
+
+  // Display summary
+  calcDisplaySummary(acc);
 };
 
 ///////////////////////////////////////
@@ -148,23 +154,19 @@ const calcDisplaySummary = function (acc) {
 let currentAccount;
 
 btnLogin.addEventListener('click', function (e) {
-  // Prevent form from submitting otherwise it will reload everytime
-
+  // Prevent form from submitting
   e.preventDefault();
 
   currentAccount = accounts.find(
-    //accounts contain user objects
-    acc => acc.username === inputLoginUsername.value //check username is equal to input username
-  ); //this will return the user object which matches the username
+    acc => acc.username === inputLoginUsername.value
+  );
+  console.log(currentAccount);
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
-    //will check for matching pin number
     // Display UI and message
     labelWelcome.textContent = `Welcome back, ${
-      currentAccount.owner.split(' ')[0] //instead of full name will only displays first name
+      currentAccount.owner.split(' ')[0]
     }`;
-
-    //Display the UI
     containerApp.style.opacity = 100;
 
     // Clear input fields
@@ -172,14 +174,31 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginPin.blur();
 
     // Update UI
-    // Display movements
-    displayMovements(currentAccount.movements);
+    updateUI(currentAccount);
+  }
+});
 
-    // Display balance
-    calcDisplayBalance(currentAccount.movements);
 
-    // Display summary
-    calcDisplaySummary(currentAccount); //the intreast rate wil be different for every account so we will take interest rate directly from the current account
-    //so we will also have to change the summary function
+//To Transfer
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);               //catching amount              
+  const receiverAcc = accounts.find(                              //getting user account if it existed
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';         //clear input fields after it
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.username !== currentAccount.username
+  ) {
+    // Doing the transfer
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
+    // Update UI
+    updateUI(currentAccount);
   }
 });
