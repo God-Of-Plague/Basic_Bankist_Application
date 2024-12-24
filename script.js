@@ -105,39 +105,81 @@ const createUsernames = function (accs) {
       .join('');
 
     //to check usernames[not part of the code]
-    console.log(acc.username);
+    // console.log(acc.username);
   });
 };
 
-//to display the total balance we need to add all the transactions in array 
+createUsernames(accounts);
+
+//to display the total balance we need to add all the transactions in array
 const calcDisplayBalance = function (movements) {
   let balance = movements.reduce((acc, mov) => acc + mov, 0);
-  
+
   //changing the content inside the balance text.
   labelBalance.textContent = `${balance}€`;
 };
 
 //now we need to enter all deposits and witdrawels and total intrest accumulated together into the page
-const calcDisplaySummary = function (movements) {
-  const incomes = movements
-    .filter(mov => mov > 0)                     //take all credits through calculating only positve ones
-    .reduce((acc, mov) => acc + mov, 0);        //summing all those
+const calcDisplaySummary = function (acc) {
+  const incomes = acc.movements
+    .filter(mov => mov > 0) //take all credits through calculating only positve ones
+    .reduce((acc, mov) => acc + mov, 0); //summing all those
   labelSumIn.textContent = `${incomes}€`;
 
-  const out = movements
-    .filter(mov => mov < 0)                     //taking all the withdrawels
-    .reduce((acc, mov) => acc + mov, 0);        //summing all those
+  const out = acc.movements
+    .filter(mov => mov < 0) //taking all the withdrawels
+    .reduce((acc, mov) => acc + mov, 0); //summing all those
   labelSumOut.textContent = `${Math.abs(out)}€`;
 
-  const interest = movements
-    .filter(mov => mov > 0)                       //intrest is caluclated for positive ones so .......
-    .map(deposit => (deposit * 1.2) / 100)        // all positive income is added with intrest rate of 1.2
-    .filter((int, i, arr) => {      //Intrest is calculated only when the minimum is atleast 1 euro.
+  const interest = acc.movements
+    .filter(mov => mov > 0) //intrest is caluclated for positive ones so .......
+    .map(deposit => (deposit * acc.interestRate) / 100) // all positive income is added with intrest rate of 1.2
+    .filter((int, i, arr) => {
+      //Intrest is calculated only when the minimum is atleast 1 euro.
       // console.log(arr);
       return int >= 1;
     })
-    .reduce((acc, int) => acc + int, 0);          //summing all of them
+    .reduce((acc, int) => acc + int, 0); //summing all of them
   labelSumInterest.textContent = `${interest}€`;
 };
 
-calcDisplaySummary(movements);
+///////////////////////////////////////
+// Event handlers
+let currentAccount;
+
+btnLogin.addEventListener('click', function (e) {
+  // Prevent form from submitting otherwise it will reload everytime
+
+  e.preventDefault();
+
+  currentAccount = accounts.find(
+    //accounts contain user objects
+    acc => acc.username === inputLoginUsername.value //check username is equal to input username
+  ); //this will return the user object which matches the username
+
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    //will check for matching pin number
+    // Display UI and message
+    labelWelcome.textContent = `Welcome back, ${
+      currentAccount.owner.split(' ')[0] //instead of full name will only displays first name
+    }`;
+
+    //Display the UI
+    containerApp.style.opacity = 100;
+
+    // Clear input fields
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur();
+
+    // Update UI
+    // Display movements
+    displayMovements(currentAccount.movements);
+
+    // Display balance
+    calcDisplayBalance(currentAccount.movements);
+
+    // Display summary
+    calcDisplaySummary(currentAccount); //the intreast rate wil be different for every account so we will take interest rate directly from the current account
+    //so we will also have to change the summary function
+  }
+});
