@@ -95,4 +95,26 @@ const displayMovements = function (movements) {
   });
 };
 
-displayMovements(account1.movements)
+//shortening the long names to short and make them usernames
+const createUsernames = function (accs) {
+  accs.forEach(function (acc) {
+    acc.username = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map(name => name[0])
+      .join('');
+
+    //to check usernames[not part of the code]
+    console.log(acc.username);
+  });
+};
+
+//to display the total balance we need to add all the transactions in array 
+const calcDisplayBalance = function (movements) {
+  let balance = movements.reduce((acc, mov) => acc + mov, 0);
+  
+  //changing the content inside the balance text.
+  labelBalance.textContent = `${balance}€`;
+};
+
+calcDisplayBalance(movements);
