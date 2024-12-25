@@ -90,10 +90,14 @@ const createUsernames = function (accs) {
 
 createUsernames(accounts);
 
-const displayMovements = function (movements, sort = false) {
+const displayMovements = function (movements, sort = 0) {
   containerMovements.innerHTML = '';
 
-  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+  // original
+  // const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  // modified
+  const movs = sort===0 ?  movements : sort ===1 ? movements.slice().sort((a, b) => a - b) : movements.slice().sort((a, b) => b - a);
 
   movs.forEach(function (mov, i) {
     const type = mov > 0 ? 'deposit' : 'withdrawal';
@@ -254,4 +258,24 @@ btnLoan.addEventListener('click', function (e) {
     updateUI(currentAccount);
   }
   inputLoanAmount.value = '';
+});
+
+
+//Adding sorting functionality
+//sort is modified by me
+//original code 
+// let sorted = false;
+// btnSort.addEventListener('click', function (e) {
+//   e.preventDefault();
+//   displayMovements(currentAccount.movements, !sorted);
+//   sorted = !sorted;
+// });
+
+
+//modified sort code
+let sorted = 0;
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  displayMovements(currentAccount.movements, sorted);
+  sorted+1 > 2 ? sorted=0 : sorted +=1;
 });
